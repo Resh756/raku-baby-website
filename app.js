@@ -1,23 +1,12 @@
-```javascript
 /* =========================================================
    RESH_DADA HUNTER SYSTEM
-   VERSION 2.1
+   VERSION 2.2
 ========================================================= */
 
 
 /* =========================
    COUNTDOWN CONFIGURATION
 ========================= */
-
-/*
-   IMPORTANT:
-   This is the exam date/time used by the countdown.
-
-   Nepal Time = UTC +05:45
-
-   Current configured date:
-   27 April 2027 at 8:00 AM Nepal Time
-*/
 
 const COUNTDOWN_DATE = "2027-04-27T08:00:00+05:45";
 
@@ -80,14 +69,17 @@ try {
 
 } catch (error) {
 
-    console.error("Save data corrupted. Resetting.");
+    console.error(
+        "Save data corrupted. Resetting.",
+        error
+    );
 
     gameState = structuredClone(DEFAULT_STATE);
 }
 
 
 /* =========================
-   MERGE MISSING DATA
+   MERGE DATA
 ========================= */
 
 gameState = {
@@ -101,29 +93,11 @@ gameState = {
 };
 
 
-/* =========================
-   FORCE COUNTDOWN DATE
-========================= */
-
 /*
-   This fixes the main problem.
-
-   If your browser already saved an older examDate
-   inside localStorage, changing DEFAULT_STATE alone
-   would NOT change it.
-
-   This line forces the current countdown date.
+   Always use the configured countdown date.
 */
 
 gameState.examDate = COUNTDOWN_DATE;
-
-
-/* Save the corrected date immediately */
-
-localStorage.setItem(
-    "resh_dada_system",
-    JSON.stringify(gameState)
-);
 
 
 /* =========================
@@ -158,11 +132,9 @@ function playSystemSound(type) {
         }
 
         const osc = ctx.createOscillator();
-
         const gain = ctx.createGain();
 
         osc.connect(gain);
-
         gain.connect(ctx.destination);
 
 
@@ -278,8 +250,9 @@ function playSystemSound(type) {
 
     } catch (error) {
 
-        console.log("Audio unavailable.");
-
+        console.log(
+            "Audio unavailable."
+        );
     }
 }
 
@@ -290,10 +263,20 @@ function playSystemSound(type) {
 
 function saveGame() {
 
-    localStorage.setItem(
-        "resh_dada_system",
-        JSON.stringify(gameState)
-    );
+    try {
+
+        localStorage.setItem(
+            "resh_dada_system",
+            JSON.stringify(gameState)
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Could not save game data.",
+            error
+        );
+    }
 }
 
 
@@ -320,11 +303,8 @@ function resetDailyQuestsIfNeeded() {
     if (gameState.lastActiveDate !== today) {
 
         gameState.quests.study.completed = false;
-
         gameState.quests.gym.completed = false;
-
         gameState.quests.walk.completed = false;
-
         gameState.quests.revision.completed = false;
 
         gameState.lastActiveDate = today;
@@ -341,16 +321,27 @@ function resetDailyQuestsIfNeeded() {
 function getRank(level) {
 
     if (level >= 75) return "S-RANK";
-
     if (level >= 50) return "A-RANK";
-
     if (level >= 30) return "B-RANK";
-
     if (level >= 15) return "C-RANK";
-
     if (level >= 5) return "D-RANK";
 
     return "E-RANK";
+}
+
+
+/* =========================
+   SAFE ELEMENT HELPER
+========================= */
+
+function setText(id, value) {
+
+    const element =
+        document.getElementById(id);
+
+    if (element) {
+        element.innerText = value;
+    }
 }
 
 
@@ -363,58 +354,74 @@ function updateDOM() {
     resetDailyQuestsIfNeeded();
 
 
-    document.getElementById("playerLevel").innerText =
-        gameState.level;
+    setText(
+        "playerLevel",
+        gameState.level
+    );
 
 
-    document.getElementById("playerXP").innerText =
-        gameState.xp;
+    setText(
+        "playerXP",
+        gameState.xp
+    );
 
 
-    document.getElementById("playerGold").innerText =
-        gameState.gold;
+    setText(
+        "playerGold",
+        gameState.gold
+    );
 
 
-    document.getElementById("playerStreak").innerText =
-        `${gameState.streak} DAYS`;
+    setText(
+        "playerStreak",
+        `${gameState.streak} DAYS`
+    );
 
 
-    const rank =
-        getRank(gameState.level);
-
-
-    document.getElementById("rankBadge").innerText =
-        rank;
+    setText(
+        "rankBadge",
+        getRank(gameState.level)
+    );
 
 
     /* XP */
 
-    const xpPercentage =
-        Math.min(gameState.xp, 100);
+    const xpBar =
+        document.getElementById("xpBar");
+
+    if (xpBar) {
+
+        const xpPercentage =
+            Math.min(gameState.xp, 100);
+
+        xpBar.style.width =
+            `${xpPercentage}%`;
+
+        setText(
+            "xpPercentage",
+            `${xpPercentage}%`
+        );
+    }
 
 
-    document.getElementById("xpBar").style.width =
-        `${xpPercentage}%`;
-
-
-    document.getElementById("xpPercentage").innerText =
-        `${xpPercentage}%`;
-
-
-    /* Quests */
+    /* Quest count */
 
     const completed =
         Object.values(gameState.quests)
-        .filter(q => q.completed)
-        .length;
+            .filter(q => q.completed)
+            .length;
 
 
-    document.getElementById("questCount").innerText =
-        `${completed}/4`;
+    setText(
+        "questCount",
+        `${completed}/4`
+    );
 
 
-    document.getElementById("completedQuestNumber").innerText =
-        completed;
+    setText(
+        "completedQuestNumber",
+        completed
+    );
 
 
     updateQuestUI();
@@ -437,6 +444,12 @@ function completeTask(type) {
 
 
     if (!gameState.quests[type]) {
+
+        console.error(
+            "Unknown quest type:",
+            type
+        );
+
         return;
     }
 
@@ -482,11 +495,11 @@ function completeTask(type) {
             message:
                 "Revision protocol completed."
         }
-
     };
 
 
-    const reward = rewards[type];
+    const reward =
+        rewards[type];
 
 
     if (!reward) {
@@ -649,7 +662,6 @@ function updateQuestUI() {
             button: "revisionButton",
             text: "COMPLETE REVISION"
         }
-
     };
 
 
@@ -716,55 +728,31 @@ function updateProgress() {
         gameState.quests;
 
 
-    const study =
-        quests.study.completed
-            ? 100
-            : 0;
-
-
-    const gym =
-        quests.gym.completed
-            ? 100
-            : 0;
-
-
-    const walk =
-        quests.walk.completed
-            ? 100
-            : 0;
-
-
-    const revision =
-        quests.revision.completed
-            ? 100
-            : 0;
-
-
     setProgress(
         "studyProgress",
         "studyProgressText",
-        study
+        quests.study.completed ? 100 : 0
     );
 
 
     setProgress(
         "gymProgress",
         "gymProgressText",
-        gym
+        quests.gym.completed ? 100 : 0
     );
 
 
     setProgress(
         "walkProgress",
         "walkProgressText",
-        walk
+        quests.walk.completed ? 100 : 0
     );
 
 
     setProgress(
         "revisionProgress",
         "revisionProgressText",
-        revision
+        quests.revision.completed ? 100 : 0
     );
 }
 
@@ -778,22 +766,20 @@ function setProgress(
     const bar =
         document.getElementById(barId);
 
-
     const text =
         document.getElementById(textId);
 
 
-    if (!bar || !text) {
-        return;
+    if (bar) {
+        bar.style.width =
+            `${value}%`;
     }
 
 
-    bar.style.width =
-        `${value}%`;
-
-
-    text.innerText =
-        `${value}%`;
+    if (text) {
+        text.innerText =
+            `${value}%`;
+    }
 }
 
 
@@ -866,7 +852,7 @@ function unlockAchievement(
 
 
 /* =========================
-   NOTIFICATION SYSTEM
+   NOTIFICATIONS
 ========================= */
 
 let notificationTimeout;
@@ -1042,36 +1028,20 @@ function closeLevelUp() {
 function runTimer() {
 
     const daysElement =
-        document.getElementById(
-            "days"
-        );
-
+        document.getElementById("days");
 
     const hoursElement =
-        document.getElementById(
-            "hours"
-        );
-
+        document.getElementById("hours");
 
     const minutesElement =
-        document.getElementById(
-            "minutes"
-        );
-
+        document.getElementById("minutes");
 
     const secondsElement =
-        document.getElementById(
-            "seconds"
-        );
-
+        document.getElementById("seconds");
 
     const statusElement =
-        document.getElementById(
-            "systemStatus"
-        );
+        document.getElementById("systemStatus");
 
-
-    /* Make sure HTML elements exist */
 
     if (
         !daysElement ||
@@ -1081,17 +1051,12 @@ function runTimer() {
     ) {
 
         console.error(
-            "COUNTDOWN ERROR: Countdown HTML elements were not found."
+            "COUNTDOWN ERROR: Missing countdown HTML elements."
         );
 
         return;
     }
 
-
-    /*
-       Convert the configured Nepal-time date
-       into a timestamp.
-    */
 
     const target =
         new Date(
@@ -1099,88 +1064,40 @@ function runTimer() {
         ).getTime();
 
 
-    const now =
-        Date.now();
-
-
-    /* Check for invalid date */
-
     if (Number.isNaN(target)) {
 
         console.error(
-            "COUNTDOWN ERROR: Invalid exam date:",
+            "COUNTDOWN ERROR: Invalid date:",
             COUNTDOWN_DATE
         );
 
-
-        daysElement.innerText =
-            "ERR";
-
-
-        hoursElement.innerText =
-            "00";
-
-
-        minutesElement.innerText =
-            "00";
-
-
-        secondsElement.innerText =
-            "00";
-
-
-        if (statusElement) {
-
-            statusElement.innerText =
-                "COUNTDOWN ERROR";
-        }
-
-
         return;
     }
+
+
+    const now =
+        Date.now();
 
 
     const difference =
         target - now;
 
 
-    /* Exam date has arrived */
-
     if (difference <= 0) {
 
-        daysElement.innerText =
-            "000";
-
-
-        hoursElement.innerText =
-            "00";
-
-
-        minutesElement.innerText =
-            "00";
-
-
-        secondsElement.innerText =
-            "00";
-
+        daysElement.innerText = "000";
+        hoursElement.innerText = "00";
+        minutesElement.innerText = "00";
+        secondsElement.innerText = "00";
 
         if (statusElement) {
-
             statusElement.innerText =
                 "EXAM GATE OPEN";
         }
 
-
         return;
     }
 
-
-    /*
-       Convert everything into seconds first.
-
-       This makes the countdown calculation
-       stable and easy to verify.
-    */
 
     const totalSeconds =
         Math.floor(
@@ -1210,34 +1127,20 @@ function runTimer() {
         totalSeconds % 60;
 
 
-    /* Display */
-
     daysElement.innerText =
-        String(days).padStart(
-            3,
-            "0"
-        );
+        String(days).padStart(3, "0");
 
 
     hoursElement.innerText =
-        String(hours).padStart(
-            2,
-            "0"
-        );
+        String(hours).padStart(2, "0");
 
 
     minutesElement.innerText =
-        String(minutes).padStart(
-            2,
-            "0"
-        );
+        String(minutes).padStart(2, "0");
 
 
     secondsElement.innerText =
-        String(seconds).padStart(
-            2,
-            "0"
-        );
+        String(seconds).padStart(2, "0");
 
 
     if (statusElement) {
@@ -1267,21 +1170,17 @@ function triggerPenalty() {
     }
 
 
-    playSystemSound(
-        "penalty"
-    );
+    playSystemSound("penalty");
 
 
-    gameState.streak =
-        0;
+    gameState.streak = 0;
 
 
     if (gameState.level > 1) {
 
         gameState.level--;
 
-        gameState.xp =
-            0;
+        gameState.xp = 0;
     }
 
 
@@ -1329,15 +1228,37 @@ function resetData() {
    INITIALIZATION
 ========================= */
 
-resetDailyQuestsIfNeeded();
-
-updateDOM();
+/*
+   IMPORTANT:
+   Countdown starts FIRST.
+   Therefore another UI problem cannot
+   prevent the timer from starting.
+*/
 
 runTimer();
 
 
 /*
-   Update countdown every second.
+   Then update the rest of the interface.
+*/
+
+try {
+
+    resetDailyQuestsIfNeeded();
+
+    updateDOM();
+
+} catch (error) {
+
+    console.error(
+        "HUNTER SYSTEM UI ERROR:",
+        error
+    );
+}
+
+
+/*
+   Countdown continues every second.
 */
 
 setInterval(
@@ -1351,7 +1272,21 @@ setInterval(
 */
 
 setInterval(
-    updateDOM,
+    () => {
+
+        try {
+
+            updateDOM();
+
+        } catch (error) {
+
+            console.error(
+                "HUNTER SYSTEM UPDATE ERROR:",
+                error
+            );
+        }
+
+    },
     60000
 );
 
@@ -1368,11 +1303,21 @@ if ("serviceWorker" in navigator) {
 
             navigator.serviceWorker
                 .register("./sw.js")
-                .then(() => {
+                .then(registration => {
 
                     console.log(
-                        "Hunter System service worker active."
+                        "Hunter System service worker active.",
+                        registration
                     );
+
+                    /*
+                       Tell the browser to check
+                       for the newest service worker.
+                    */
+
+                    if (registration.update) {
+                        registration.update();
+                    }
 
                 })
                 .catch(error => {
@@ -1386,30 +1331,3 @@ if ("serviceWorker" in navigator) {
         }
     );
 }
-```
-
-### One more change — `sw.js`
-
-Your service worker can still be serving the old JavaScript. Change:
-
-```javascript
-const CACHE_NAME = "resh-dada-hunter-v2";
-```
-
-to:
-
-```javascript
-const CACHE_NAME = "resh-dada-hunter-v3";
-```
-
-Then **save both files** and press:
-
-**Ctrl + Shift + R**
-
-The countdown should now be calculated directly from:
-
-**27 April 2027, 8:00 AM Nepal Time**
-
-and it should visibly decrease every second.
-
-If `27 April 2027` is **not** your actual exam date, tell me the actual date/time and I'll change the countdown target for you.
