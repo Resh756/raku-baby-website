@@ -423,8 +423,6 @@ function updateDOM() {
 
     updateAchievements();
 
-    updateCooldowns();
-
     saveGame();
 }
 
