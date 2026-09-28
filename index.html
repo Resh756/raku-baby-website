@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resh_Dada's Hunter System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="hud-container">
+        <!-- System Header -->
+        <header class="system-header">
+            <h1 class="neon-text">PLAYER: RESH_DADA</h1>
+            <div class="rank-badge" id="rankBadge">E-RANK</div>
+        </header>
+
+        <!-- Stats Panel -->
+        <section class="stats-panel">
+            <div class="stat-box">Level: <span id="playerLevel">1</span></div>
+            <div class="stat-box">XP: <span id="playerXP">0</span>/100</div>
+            <div class="stat-box">Gold: <span id="playerGold">0</span>G</div>
+        </section>
+
+        <!-- Countdown Timer -->
+        <section class="countdown-section">
+            <h3>💥 BOARD EXAM COUNTDOWN</h3>
+            <div id="countdownDisplay" class="countdown-timer">00d : 00h : 00m</div>
+        </section>
+
+        <!-- Modules Grid -->
+        <main class="modules-grid">
+            <!-- College Study Track -->
+            <div class="card">
+                <h3>📖 COLLEGE STUDY CORE</h3>
+                <select id="subjectSelect">
+                    <option value="cs">💻 Computer Science</option>
+                    <option value="account">📊 Account</option>
+                    <option value="maths">📈 Business Maths</option>
+                    <option value="english">📝 English</option>
+                    <option value="nepali">🇳🇵 Nepali</option>
+                    <option value="samajik">🤝 Samajik</option>
+                </select>
+                <button onclick="completeTask('study', 25)" class="btn neon-blue">Complete 1 Hour Session</button>
+            </div>
+
+            <!-- Gym Track -->
+            <div class="card">
+                <h3>⚔️ GYM TRAINING GATES</h3>
+                <button onclick="completeTask('gym', 40)" class="btn neon-green">Clear Workout Session</button>
+            </div>
+        </main>
+
+        <!-- Action Controls -->
+        <div class="controls">
+            <button onclick="triggerPenalty()" class="btn neon-red">Simulate Penalty Break</button>
+            <button onclick="resetData()" class="btn btn-secondary">Reset System Data</button>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
