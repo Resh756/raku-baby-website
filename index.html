@@ -3,63 +3,466 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Resh_Dada's Hunter System</title>
-    <link rel="manifest" href="manifest.json">
-<!-- Theme color for phone status bar -->
-<meta name="theme-color" content="#0a0b10">
 
     <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+
+    <meta name="theme-color" content="#070910">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
 </head>
+
 <body>
-    <div class="hud-container">
-        <!-- System Header -->
-        <header class="system-header">
-            <h1 class="neon-text">PLAYER: RESH_DADA</h1>
-            <div class="rank-badge" id="rankBadge">E-RANK</div>
-        </header>
 
-        <!-- Stats Panel -->
-        <section class="stats-panel">
-            <div class="stat-box">Level: <span id="playerLevel">1</span></div>
-            <div class="stat-box">XP: <span id="playerXP">0</span>/100</div>
-            <div class="stat-box">Gold: <span id="playerGold">0</span>G</div>
-        </section>
+    <!-- Animated Background -->
+    <div class="background-grid"></div>
+    <div class="scanline"></div>
 
-        <!-- Countdown Timer -->
-        <section class="countdown-section">
-            <h3>💥 BOARD EXAM COUNTDOWN</h3>
-            <div id="countdownDisplay" class="countdown-timer">00d : 00h : 00m</div>
-        </section>
-
-        <!-- Modules Grid -->
-        <main class="modules-grid">
-            <!-- College Study Track -->
-            <div class="card">
-                <h3>📖 COLLEGE STUDY CORE</h3>
-                <select id="subjectSelect">
-                    <option value="cs">💻 Computer Science</option>
-                    <option value="account">📊 Account</option>
-                    <option value="maths">📈 Business Maths</option>
-                    <option value="english">📝 English</option>
-                    <option value="nepali">🇳🇵 Nepali</option>
-                    <option value="samajik">🤝 Samajik</option>
-                </select>
-                <button onclick="completeTask('study', 25)" class="btn neon-blue">Complete 1 Hour Session</button>
-            </div>
-
-            <!-- Gym Track -->
-            <div class="card">
-                <h3>⚔️ GYM TRAINING GATES</h3>
-                <button onclick="completeTask('gym', 40)" class="btn neon-green">Clear Workout Session</button>
-            </div>
-        </main>
-
-        <!-- Action Controls -->
-        <div class="controls">
-            <button onclick="triggerPenalty()" class="btn neon-red">Simulate Penalty Break</button>
-            <button onclick="resetData()" class="btn btn-secondary">Reset System Data</button>
+    <!-- Notification -->
+    <div id="notification" class="notification">
+        <div class="notification-icon">⚡</div>
+        <div>
+            <div id="notificationTitle">SYSTEM</div>
+            <div id="notificationMessage">System initialized.</div>
         </div>
     </div>
+
+    <!-- Level Up Overlay -->
+    <div id="levelUpOverlay" class="level-up-overlay">
+        <div class="level-up-box">
+            <div class="level-up-small">SYSTEM MESSAGE</div>
+            <div class="level-up-title">LEVEL UP</div>
+            <div class="level-up-level">
+                LEVEL <span id="newLevel">2</span>
+            </div>
+            <div class="level-up-rank" id="newRank">D-RANK</div>
+            <button class="btn neon-blue" onclick="closeLevelUp()">CONTINUE</button>
+        </div>
+    </div>
+
+    <div class="hud-container">
+
+        <!-- HEADER -->
+        <header class="system-header">
+
+            <div class="player-info">
+                <div class="system-label">
+                    <span class="status-dot"></span>
+                    SYSTEM ONLINE
+                </div>
+
+                <h1 class="neon-text">
+                    PLAYER: <span>RESH_DADA</span>
+                </h1>
+
+                <p class="subtitle">
+                    PERSONAL HUNTER DEVELOPMENT SYSTEM
+                </p>
+            </div>
+
+            <div class="rank-container">
+                <div class="rank-label">CURRENT RANK</div>
+                <div id="rankBadge" class="rank-badge">E-RANK</div>
+            </div>
+
+        </header>
+
+
+        <!-- MAIN PLAYER STATS -->
+        <section class="player-panel">
+
+            <div class="level-section">
+
+                <div class="level-top">
+
+                    <div>
+                        <span class="small-label">PLAYER LEVEL</span>
+                        <div class="big-level">
+                            LVL <span id="playerLevel">1</span>
+                        </div>
+                    </div>
+
+                    <div class="xp-text">
+                        <span id="playerXP">0</span>
+                        / 100 XP
+                    </div>
+
+                </div>
+
+                <div class="xp-bar">
+                    <div id="xpBar" class="xp-fill"></div>
+                </div>
+
+                <div class="xp-bottom">
+                    <span>EXPERIENCE</span>
+                    <span id="xpPercentage">0%</span>
+                </div>
+
+            </div>
+
+
+            <div class="quick-stats">
+
+                <div class="quick-stat">
+                    <div class="quick-icon gold">💰</div>
+                    <div>
+                        <span>GOLD</span>
+                        <strong id="playerGold">0</strong>
+                    </div>
+                </div>
+
+                <div class="quick-stat">
+                    <div class="quick-icon fire">🔥</div>
+                    <div>
+                        <span>STREAK</span>
+                        <strong id="playerStreak">0 DAYS</strong>
+                    </div>
+                </div>
+
+                <div class="quick-stat">
+                    <div class="quick-icon quest">🎯</div>
+                    <div>
+                        <span>QUESTS</span>
+                        <strong id="questCount">0/4</strong>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- COUNTDOWN -->
+        <section class="countdown-section">
+
+            <div class="section-heading">
+                <div>
+                    <span class="section-tag">MISSION OBJECTIVE</span>
+                    <h2>💥 BOARD EXAM COUNTDOWN</h2>
+                </div>
+
+                <div class="gate-status">
+                    <span></span>
+                    GATE ACTIVE
+                </div>
+            </div>
+
+            <div class="countdown-grid">
+
+                <div class="time-unit">
+                    <strong id="days">000</strong>
+                    <span>DAYS</span>
+                </div>
+
+                <div class="time-separator">:</div>
+
+                <div class="time-unit">
+                    <strong id="hours">00</strong>
+                    <span>HOURS</span>
+                </div>
+
+                <div class="time-separator">:</div>
+
+                <div class="time-unit">
+                    <strong id="minutes">00</strong>
+                    <span>MINUTES</span>
+                </div>
+
+                <div class="time-separator">:</div>
+
+                <div class="time-unit">
+                    <strong id="seconds">00</strong>
+                    <span>SECONDS</span>
+                </div>
+
+            </div>
+
+            <div class="countdown-footer">
+                <span>⚠️ YOUR TIME IS LIMITED. YOUR PROGRESS IS NOT.</span>
+            </div>
+
+        </section>
+
+
+        <!-- DAILY QUESTS -->
+        <section class="quests-section">
+
+            <div class="section-heading">
+                <div>
+                    <span class="section-tag">DAILY PROTOCOL</span>
+                    <h2>🎯 DAILY QUESTS</h2>
+                </div>
+
+                <div class="quest-counter">
+                    <span id="completedQuestNumber">0</span>/4 COMPLETE
+                </div>
+            </div>
+
+
+            <div class="quests-grid">
+
+                <!-- STUDY -->
+                <div id="studyQuest" class="quest-card">
+
+                    <div class="quest-icon blue">
+                        📚
+                    </div>
+
+                    <div class="quest-content">
+
+                        <div class="quest-title-row">
+                            <h3>STUDY PROTOCOL</h3>
+                            <span class="xp-reward">+25 XP</span>
+                        </div>
+
+                        <p>Complete a focused study session.</p>
+
+                        <select id="subjectSelect">
+                            <option value="Computer Science">💻 Computer Science</option>
+                            <option value="Account">📊 Account</option>
+                            <option value="Business Maths">📈 Business Maths</option>
+                            <option value="English">📝 English</option>
+                            <option value="Nepali">🇳🇵 Nepali</option>
+                            <option value="Samajik">🤝 Samajik</option>
+                        </select>
+
+                        <button
+                            id="studyButton"
+                            onclick="completeTask('study')"
+                            class="quest-button blue-button">
+                            COMPLETE STUDY
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- GYM -->
+                <div id="gymQuest" class="quest-card">
+
+                    <div class="quest-icon green">
+                        🏋️
+                    </div>
+
+                    <div class="quest-content">
+
+                        <div class="quest-title-row">
+                            <h3>TRAINING GATE</h3>
+                            <span class="xp-reward green-xp">+40 XP</span>
+                        </div>
+
+                        <p>Complete your training session.</p>
+
+                        <div class="quest-info">
+                            <span>⚔️ Physical Development</span>
+                        </div>
+
+                        <button
+                            id="gymButton"
+                            onclick="completeTask('gym')"
+                            class="quest-button green-button">
+                            CLEAR WORKOUT
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- WALK -->
+                <div id="walkQuest" class="quest-card">
+
+                    <div class="quest-icon purple">
+                        🚶
+                    </div>
+
+                    <div class="quest-content">
+
+                        <div class="quest-title-row">
+                            <h3>MOBILITY QUEST</h3>
+                            <span class="xp-reward purple-xp">+15 XP</span>
+                        </div>
+
+                        <p>Complete a 30-minute walking session.</p>
+
+                        <div class="quest-info">
+                            <span>🌎 Stamina Development</span>
+                        </div>
+
+                        <button
+                            id="walkButton"
+                            onclick="completeTask('walk')"
+                            class="quest-button purple-button">
+                            COMPLETE WALK
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- REVISION -->
+                <div id="revisionQuest" class="quest-card">
+
+                    <div class="quest-icon orange">
+                        📝
+                    </div>
+
+                    <div class="quest-content">
+
+                        <div class="quest-title-row">
+                            <h3>REVISION QUEST</h3>
+                            <span class="xp-reward orange-xp">+20 XP</span>
+                        </div>
+
+                        <p>Complete one revision or practice session.</p>
+
+                        <div class="quest-info">
+                            <span>🧠 Knowledge Development</span>
+                        </div>
+
+                        <button
+                            id="revisionButton"
+                            onclick="completeTask('revision')"
+                            class="quest-button orange-button">
+                            COMPLETE REVISION
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- TODAY'S PROGRESS -->
+        <section class="progress-section">
+
+            <div class="section-heading">
+                <div>
+                    <span class="section-tag">SYSTEM ANALYTICS</span>
+                    <h2>📊 TODAY'S PROGRESS</h2>
+                </div>
+            </div>
+
+            <div class="progress-grid">
+
+                <div class="progress-item">
+                    <div class="progress-title">
+                        <span>📚 Study</span>
+                        <strong id="studyProgressText">0%</strong>
+                    </div>
+                    <div class="mini-progress">
+                        <div id="studyProgress" class="mini-fill blue-fill"></div>
+                    </div>
+                </div>
+
+                <div class="progress-item">
+                    <div class="progress-title">
+                        <span>🏋️ Training</span>
+                        <strong id="gymProgressText">0%</strong>
+                    </div>
+                    <div class="mini-progress">
+                        <div id="gymProgress" class="mini-fill green-fill"></div>
+                    </div>
+                </div>
+
+                <div class="progress-item">
+                    <div class="progress-title">
+                        <span>🚶 Walking</span>
+                        <strong id="walkProgressText">0%</strong>
+                    </div>
+                    <div class="mini-progress">
+                        <div id="walkProgress" class="mini-fill purple-fill"></div>
+                    </div>
+                </div>
+
+                <div class="progress-item">
+                    <div class="progress-title">
+                        <span>📝 Revision</span>
+                        <strong id="revisionProgressText">0%</strong>
+                    </div>
+                    <div class="mini-progress">
+                        <div id="revisionProgress" class="mini-fill orange-fill"></div>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ACHIEVEMENTS -->
+        <section class="achievement-section">
+
+            <div class="section-heading">
+                <div>
+                    <span class="section-tag">SYSTEM RECORDS</span>
+                    <h2>🏆 ACHIEVEMENTS</h2>
+                </div>
+            </div>
+
+            <div class="achievements-grid">
+
+                <div id="achievementFirst" class="achievement locked">
+                    <div>⚡</div>
+                    <span>FIRST BLOOD</span>
+                    <small>Complete your first quest</small>
+                </div>
+
+                <div id="achievementLevel" class="achievement locked">
+                    <div>⭐</div>
+                    <span>RISING HUNTER</span>
+                    <small>Reach Level 5</small>
+                </div>
+
+                <div id="achievementStreak" class="achievement locked">
+                    <div>🔥</div>
+                    <span>UNBREAKABLE</span>
+                    <small>Reach a 7 day streak</small>
+                </div>
+
+                <div id="achievementGold" class="achievement locked">
+                    <div>💰</div>
+                    <span>TREASURE HUNTER</span>
+                    <small>Collect 500 Gold</small>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- FOOTER CONTROLS -->
+        <section class="system-controls">
+
+            <button onclick="triggerPenalty()" class="control-button penalty">
+                ⚠ SIMULATE PENALTY
+            </button>
+
+            <button onclick="resetData()" class="control-button reset">
+                ↻ RESET SYSTEM
+            </button>
+
+        </section>
+
+
+        <footer class="system-footer">
+            <span>RESH_DADA HUNTER SYSTEM</span>
+            <span>•</span>
+            <span>VERSION 2.0</span>
+            <span>•</span>
+            <span id="systemStatus">ALL SYSTEMS OPERATIONAL</span>
+        </footer>
+
+    </div>
+
     <script src="app.js"></script>
+
 </body>
 </html>
