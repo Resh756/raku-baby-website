@@ -99,3 +99,16 @@ function runTimer() {
 updateDOM();
 setInterval(runTimer, 60000);
 runTimer();
+// Register PWA Engine so the app becomes installable
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        const swCode = `
+            const CACHE_NAME = 'resh-dada-v1';
+            self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(['./', './index.html', './styles.css', './app.js', './icon.svg', './manifest.json']))));
+            self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(res => res || fetch(e.request))));
+        `;
+        const blob = new Blob([swCode], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(blob);
+        navigator.serviceWorker.register(swUrl).catch(err => console.log("System offline module error:", err));
+    });
+}
