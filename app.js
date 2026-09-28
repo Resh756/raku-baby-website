@@ -1,7 +1,25 @@
+```javascript
 /* =========================================================
    RESH_DADA HUNTER SYSTEM
-   VERSION 2.0
+   VERSION 2.1
 ========================================================= */
+
+
+/* =========================
+   COUNTDOWN CONFIGURATION
+========================= */
+
+/*
+   IMPORTANT:
+   This is the exam date/time used by the countdown.
+
+   Nepal Time = UTC +05:45
+
+   Current configured date:
+   27 April 2027 at 8:00 AM Nepal Time
+*/
+
+const COUNTDOWN_DATE = "2027-04-27T08:00:00+05:45";
 
 
 /* =========================
@@ -20,7 +38,7 @@ const DEFAULT_STATE = {
 
     lastActiveDate: null,
 
-    examDate: "2027-04-27T08:00:00+05:45",
+    examDate: COUNTDOWN_DATE,
 
     quests: {
         study: {
@@ -84,14 +102,41 @@ gameState = {
 
 
 /* =========================
+   FORCE COUNTDOWN DATE
+========================= */
+
+/*
+   This fixes the main problem.
+
+   If your browser already saved an older examDate
+   inside localStorage, changing DEFAULT_STATE alone
+   would NOT change it.
+
+   This line forces the current countdown date.
+*/
+
+gameState.examDate = COUNTDOWN_DATE;
+
+
+/* Save the corrected date immediately */
+
+localStorage.setItem(
+    "resh_dada_system",
+    JSON.stringify(gameState)
+);
+
+
+/* =========================
    AUDIO SYSTEM
 ========================= */
 
 let audioCtx = null;
 
+
 function getAudioContext() {
 
     if (!audioCtx) {
+
         audioCtx = new (
             window.AudioContext ||
             window.webkitAudioContext
@@ -152,8 +197,9 @@ function playSystemSound(type) {
 
             osc.start();
 
-            osc.stop(ctx.currentTime + 0.4);
-
+            osc.stop(
+                ctx.currentTime + 0.4
+            );
         }
 
 
@@ -193,8 +239,9 @@ function playSystemSound(type) {
 
             osc.start();
 
-            osc.stop(ctx.currentTime + 0.8);
-
+            osc.stop(
+                ctx.currentTime + 0.8
+            );
         }
 
 
@@ -224,7 +271,9 @@ function playSystemSound(type) {
 
             osc.start();
 
-            osc.stop(ctx.currentTime + 0.5);
+            osc.stop(
+                ctx.currentTime + 0.5
+            );
         }
 
     } catch (error) {
@@ -271,8 +320,11 @@ function resetDailyQuestsIfNeeded() {
     if (gameState.lastActiveDate !== today) {
 
         gameState.quests.study.completed = false;
+
         gameState.quests.gym.completed = false;
+
         gameState.quests.walk.completed = false;
+
         gameState.quests.revision.completed = false;
 
         gameState.lastActiveDate = today;
@@ -327,7 +379,9 @@ function updateDOM() {
         `${gameState.streak} DAYS`;
 
 
-    const rank = getRank(gameState.level);
+    const rank =
+        getRank(gameState.level);
+
 
     document.getElementById("rankBadge").innerText =
         rank;
@@ -338,8 +392,10 @@ function updateDOM() {
     const xpPercentage =
         Math.min(gameState.xp, 100);
 
+
     document.getElementById("xpBar").style.width =
         `${xpPercentage}%`;
+
 
     document.getElementById("xpPercentage").innerText =
         `${xpPercentage}%`;
@@ -349,11 +405,13 @@ function updateDOM() {
 
     const completed =
         Object.values(gameState.quests)
-        .filter(q => q.completed).length;
+        .filter(q => q.completed)
+        .length;
 
 
     document.getElementById("questCount").innerText =
         `${completed}/4`;
+
 
     document.getElementById("completedQuestNumber").innerText =
         completed;
@@ -402,25 +460,29 @@ function completeTask(type) {
         study: {
             xp: 25,
             gold: 12,
-            message: "Study protocol successfully completed."
+            message:
+                "Study protocol successfully completed."
         },
 
         gym: {
             xp: 40,
             gold: 20,
-            message: "Training gate successfully cleared."
+            message:
+                "Training gate successfully cleared."
         },
 
         walk: {
             xp: 15,
             gold: 7,
-            message: "Mobility quest completed."
+            message:
+                "Mobility quest completed."
         },
 
         revision: {
             xp: 20,
             gold: 10,
-            message: "Revision protocol completed."
+            message:
+                "Revision protocol completed."
         }
 
     };
@@ -434,10 +496,13 @@ function completeTask(type) {
     }
 
 
-    const previousLevel = gameState.level;
+    const previousLevel =
+        gameState.level;
 
 
-    gameState.quests[type].completed = true;
+    gameState.quests[type].completed =
+        true;
+
 
     gameState.quests[type].lastCompleted =
         Date.now();
@@ -497,9 +562,12 @@ function completeTask(type) {
 
 function updateStreak() {
 
-    const today = getToday();
+    const today =
+        getToday();
 
-    const lastDate = gameState.lastActiveDate;
+
+    const lastDate =
+        gameState.lastActiveDate;
 
 
     if (!lastDate) {
@@ -537,8 +605,10 @@ function updateStreak() {
     }
 
 
-    if (gameState.streak >
-        gameState.bestStreak) {
+    if (
+        gameState.streak >
+        gameState.bestStreak
+    ) {
 
         gameState.bestStreak =
             gameState.streak;
@@ -587,29 +657,49 @@ function updateQuestUI() {
 
     for (const type in questMap) {
 
-        const data = questMap[type];
+        const data =
+            questMap[type];
+
 
         const card =
-            document.getElementById(data.card);
+            document.getElementById(
+                data.card
+            );
+
 
         const button =
-            document.getElementById(data.button);
+            document.getElementById(
+                data.button
+            );
 
 
-        if (gameState.quests[type].completed) {
+        if (!card || !button) {
+            continue;
+        }
 
-            card.classList.add("completed");
 
-            button.disabled = true;
+        if (
+            gameState.quests[type].completed
+        ) {
+
+            card.classList.add(
+                "completed"
+            );
+
+            button.disabled =
+                true;
 
             button.innerText =
                 "✓ QUEST COMPLETE";
 
         } else {
 
-            card.classList.remove("completed");
+            card.classList.remove(
+                "completed"
+            );
 
-            button.disabled = false;
+            button.disabled =
+                false;
 
             button.innerText =
                 data.text;
@@ -624,20 +714,32 @@ function updateQuestUI() {
 
 function updateProgress() {
 
-    const quests = gameState.quests;
+    const quests =
+        gameState.quests;
 
 
     const study =
-        quests.study.completed ? 100 : 0;
+        quests.study.completed
+            ? 100
+            : 0;
+
 
     const gym =
-        quests.gym.completed ? 100 : 0;
+        quests.gym.completed
+            ? 100
+            : 0;
+
 
     const walk =
-        quests.walk.completed ? 100 : 0;
+        quests.walk.completed
+            ? 100
+            : 0;
+
 
     const revision =
-        quests.revision.completed ? 100 : 0;
+        quests.revision.completed
+            ? 100
+            : 0;
 
 
     setProgress(
@@ -646,17 +748,20 @@ function updateProgress() {
         study
     );
 
+
     setProgress(
         "gymProgress",
         "gymProgressText",
         gym
     );
 
+
     setProgress(
         "walkProgress",
         "walkProgressText",
         walk
     );
+
 
     setProgress(
         "revisionProgress",
@@ -666,12 +771,30 @@ function updateProgress() {
 }
 
 
-function setProgress(barId, textId, value) {
+function setProgress(
+    barId,
+    textId,
+    value
+) {
 
-    document.getElementById(barId).style.width =
+    const bar =
+        document.getElementById(barId);
+
+
+    const text =
+        document.getElementById(textId);
+
+
+    if (!bar || !text) {
+        return;
+    }
+
+
+    bar.style.width =
         `${value}%`;
 
-    document.getElementById(textId).innerText =
+
+    text.innerText =
         `${value}%`;
 }
 
@@ -707,26 +830,39 @@ function updateAchievements() {
 }
 
 
-function unlockAchievement(id, unlocked) {
+function unlockAchievement(
+    id,
+    unlocked
+) {
 
     const element =
         document.getElementById(id);
+
 
     if (!element) {
         return;
     }
 
+
     if (unlocked) {
 
-        element.classList.add("unlocked");
+        element.classList.add(
+            "unlocked"
+        );
 
-        element.classList.remove("locked");
+        element.classList.remove(
+            "locked"
+        );
 
     } else {
 
-        element.classList.remove("unlocked");
+        element.classList.remove(
+            "unlocked"
+        );
 
-        element.classList.add("locked");
+        element.classList.add(
+            "locked"
+        );
     }
 }
 
@@ -745,17 +881,35 @@ function showNotification(
 ) {
 
     const notification =
-        document.getElementById("notification");
+        document.getElementById(
+            "notification"
+        );
+
 
     const titleElement =
-        document.getElementById("notificationTitle");
+        document.getElementById(
+            "notificationTitle"
+        );
+
 
     const messageElement =
-        document.getElementById("notificationMessage");
+        document.getElementById(
+            "notificationMessage"
+        );
+
+
+    if (
+        !notification ||
+        !titleElement ||
+        !messageElement
+    ) {
+        return;
+    }
 
 
     titleElement.innerText =
         title;
+
 
     messageElement.innerText =
         message;
@@ -791,16 +945,22 @@ function showNotification(
     }
 
 
-    notification.classList.add("show");
+    notification.classList.add(
+        "show"
+    );
 
 
-    clearTimeout(notificationTimeout);
+    clearTimeout(
+        notificationTimeout
+    );
 
 
     notificationTimeout =
         setTimeout(() => {
 
-            notification.classList.remove("show");
+            notification.classList.remove(
+                "show"
+            );
 
         }, 3500);
 }
@@ -812,24 +972,61 @@ function showNotification(
 
 function showLevelUp() {
 
-    document.getElementById("newLevel").innerText =
-        gameState.level;
+    const newLevel =
+        document.getElementById(
+            "newLevel"
+        );
 
-    document.getElementById("newRank").innerText =
-        getRank(gameState.level);
+
+    const newRank =
+        document.getElementById(
+            "newRank"
+        );
 
 
-    document
-        .getElementById("levelUpOverlay")
-        .classList.add("show");
+    const overlay =
+        document.getElementById(
+            "levelUpOverlay"
+        );
+
+
+    if (!overlay) {
+        return;
+    }
+
+
+    if (newLevel) {
+        newLevel.innerText =
+            gameState.level;
+    }
+
+
+    if (newRank) {
+        newRank.innerText =
+            getRank(gameState.level);
+    }
+
+
+    overlay.classList.add(
+        "show"
+    );
 }
 
 
 function closeLevelUp() {
 
-    document
-        .getElementById("levelUpOverlay")
-        .classList.remove("show");
+    const overlay =
+        document.getElementById(
+            "levelUpOverlay"
+        );
+
+
+    if (overlay) {
+
+        overlay.classList.remove(
+            "show"
+        );
+    }
 
 
     showNotification(
@@ -846,60 +1043,212 @@ function closeLevelUp() {
 
 function runTimer() {
 
-    const target = new Date(gameState.examDate).getTime();
-    const now = Date.now();
+    const daysElement =
+        document.getElementById(
+            "days"
+        );
 
-    const difference = target - now;
 
-    const daysElement = document.getElementById("days");
-    const hoursElement = document.getElementById("hours");
-    const minutesElement = document.getElementById("minutes");
-    const secondsElement = document.getElementById("seconds");
+    const hoursElement =
+        document.getElementById(
+            "hours"
+        );
 
-    if (!daysElement || !hoursElement || !minutesElement || !secondsElement) {
-        console.error("Countdown elements not found.");
+
+    const minutesElement =
+        document.getElementById(
+            "minutes"
+        );
+
+
+    const secondsElement =
+        document.getElementById(
+            "seconds"
+        );
+
+
+    const statusElement =
+        document.getElementById(
+            "systemStatus"
+        );
+
+
+    /* Make sure HTML elements exist */
+
+    if (
+        !daysElement ||
+        !hoursElement ||
+        !minutesElement ||
+        !secondsElement
+    ) {
+
+        console.error(
+            "COUNTDOWN ERROR: Countdown HTML elements were not found."
+        );
+
         return;
     }
+
+
+    /*
+       Convert the configured Nepal-time date
+       into a timestamp.
+    */
+
+    const target =
+        new Date(
+            COUNTDOWN_DATE
+        ).getTime();
+
+
+    const now =
+        Date.now();
+
+
+    /* Check for invalid date */
+
+    if (Number.isNaN(target)) {
+
+        console.error(
+            "COUNTDOWN ERROR: Invalid exam date:",
+            COUNTDOWN_DATE
+        );
+
+
+        daysElement.innerText =
+            "ERR";
+
+
+        hoursElement.innerText =
+            "00";
+
+
+        minutesElement.innerText =
+            "00";
+
+
+        secondsElement.innerText =
+            "00";
+
+
+        if (statusElement) {
+
+            statusElement.innerText =
+                "COUNTDOWN ERROR";
+        }
+
+
+        return;
+    }
+
+
+    const difference =
+        target - now;
+
+
+    /* Exam date has arrived */
 
     if (difference <= 0) {
 
-        daysElement.innerText = "000";
-        hoursElement.innerText = "00";
-        minutesElement.innerText = "00";
-        secondsElement.innerText = "00";
+        daysElement.innerText =
+            "000";
 
-        document.getElementById("systemStatus").innerText =
-            "EXAM GATE OPEN";
+
+        hoursElement.innerText =
+            "00";
+
+
+        minutesElement.innerText =
+            "00";
+
+
+        secondsElement.innerText =
+            "00";
+
+
+        if (statusElement) {
+
+            statusElement.innerText =
+                "EXAM GATE OPEN";
+        }
+
 
         return;
     }
 
-    const totalSeconds = Math.floor(difference / 1000);
 
-    const days = Math.floor(totalSeconds / 86400);
+    /*
+       Convert everything into seconds first.
 
-    const hours = Math.floor(
-        (totalSeconds % 86400) / 3600
-    );
+       This makes the countdown calculation
+       stable and easy to verify.
+    */
 
-    const minutes = Math.floor(
-        (totalSeconds % 3600) / 60
-    );
+    const totalSeconds =
+        Math.floor(
+            difference / 1000
+        );
 
-    const seconds = totalSeconds % 60;
+
+    const days =
+        Math.floor(
+            totalSeconds / 86400
+        );
+
+
+    const hours =
+        Math.floor(
+            (totalSeconds % 86400) / 3600
+        );
+
+
+    const minutes =
+        Math.floor(
+            (totalSeconds % 3600) / 60
+        );
+
+
+    const seconds =
+        totalSeconds % 60;
+
+
+    /* Display */
 
     daysElement.innerText =
-        String(days).padStart(3, "0");
+        String(days).padStart(
+            3,
+            "0"
+        );
+
 
     hoursElement.innerText =
-        String(hours).padStart(2, "0");
+        String(hours).padStart(
+            2,
+            "0"
+        );
+
 
     minutesElement.innerText =
-        String(minutes).padStart(2, "0");
+        String(minutes).padStart(
+            2,
+            "0"
+        );
+
 
     secondsElement.innerText =
-        String(seconds).padStart(2, "0");
+        String(seconds).padStart(
+            2,
+            "0"
+        );
+
+
+    if (statusElement) {
+
+        statusElement.innerText =
+            "COUNTDOWN ACTIVE";
+    }
 }
+
 
 /* =========================
    PENALTY
@@ -920,17 +1269,21 @@ function triggerPenalty() {
     }
 
 
-    playSystemSound("penalty");
+    playSystemSound(
+        "penalty"
+    );
 
 
-    gameState.streak = 0;
+    gameState.streak =
+        0;
 
 
     if (gameState.level > 1) {
 
         gameState.level--;
 
-        gameState.xp = 0;
+        gameState.xp =
+            0;
     }
 
 
@@ -985,7 +1338,9 @@ updateDOM();
 runTimer();
 
 
-/* Update countdown every second */
+/*
+   Update countdown every second.
+*/
 
 setInterval(
     runTimer,
@@ -993,7 +1348,9 @@ setInterval(
 );
 
 
-/* Update cooldown / interface every minute */
+/*
+   Update interface every minute.
+*/
 
 setInterval(
     updateDOM,
@@ -1031,3 +1388,30 @@ if ("serviceWorker" in navigator) {
         }
     );
 }
+```
+
+### One more change — `sw.js`
+
+Your service worker can still be serving the old JavaScript. Change:
+
+```javascript
+const CACHE_NAME = "resh-dada-hunter-v2";
+```
+
+to:
+
+```javascript
+const CACHE_NAME = "resh-dada-hunter-v3";
+```
+
+Then **save both files** and press:
+
+**Ctrl + Shift + R**
+
+The countdown should now be calculated directly from:
+
+**27 April 2027, 8:00 AM Nepal Time**
+
+and it should visibly decrease every second.
+
+If `27 April 2027` is **not** your actual exam date, tell me the actual date/time and I'll change the countdown target for you.
