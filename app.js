@@ -846,32 +846,27 @@ function closeLevelUp() {
 
 function runTimer() {
 
-    const target =
-        new Date(gameState.examDate)
-        .getTime();
+    const target = new Date(gameState.examDate).getTime();
+    const now = Date.now();
 
+    const difference = target - now;
 
-    const now =
-        Date.now();
+    const daysElement = document.getElementById("days");
+    const hoursElement = document.getElementById("hours");
+    const minutesElement = document.getElementById("minutes");
+    const secondsElement = document.getElementById("seconds");
 
-
-    const difference =
-        target - now;
-
+    if (!daysElement || !hoursElement || !minutesElement || !secondsElement) {
+        console.error("Countdown elements not found.");
+        return;
+    }
 
     if (difference <= 0) {
 
-        document.getElementById("days").innerText =
-            "000";
-
-        document.getElementById("hours").innerText =
-            "00";
-
-        document.getElementById("minutes").innerText =
-            "00";
-
-        document.getElementById("seconds").innerText =
-            "00";
+        daysElement.innerText = "000";
+        hoursElement.innerText = "00";
+        minutesElement.innerText = "00";
+        secondsElement.innerText = "00";
 
         document.getElementById("systemStatus").innerText =
             "EXAM GATE OPEN";
@@ -879,54 +874,32 @@ function runTimer() {
         return;
     }
 
+    const totalSeconds = Math.floor(difference / 1000);
 
-    const days =
-        Math.floor(
-            difference /
-            (1000 * 60 * 60 * 24)
-        );
+    const days = Math.floor(totalSeconds / 86400);
 
+    const hours = Math.floor(
+        (totalSeconds % 86400) / 3600
+    );
 
-    const hours =
-        Math.floor(
-            (difference %
-                (1000 * 60 * 60 * 24)) /
-            (1000 * 60 * 60)
-        );
+    const minutes = Math.floor(
+        (totalSeconds % 3600) / 60
+    );
 
+    const seconds = totalSeconds % 60;
 
-    const minutes =
-        Math.floor(
-            (difference %
-                (1000 * 60 * 60)) /
-            (1000 * 60)
-        );
-
-
-    const seconds =
-        Math.floor(
-            (difference %
-                (1000 * 60)) /
-            1000
-        );
-
-
-    document.getElementById("days").innerText =
+    daysElement.innerText =
         String(days).padStart(3, "0");
 
-
-    document.getElementById("hours").innerText =
+    hoursElement.innerText =
         String(hours).padStart(2, "0");
 
-
-    document.getElementById("minutes").innerText =
+    minutesElement.innerText =
         String(minutes).padStart(2, "0");
 
-
-    document.getElementById("seconds").innerText =
+    secondsElement.innerText =
         String(seconds).padStart(2, "0");
 }
-
 
 /* =========================
    PENALTY
