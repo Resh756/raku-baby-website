@@ -1,164 +1,1060 @@
-// Local Database Engine - Set to exactly 211 Days from today in Nepal Time (April 27, 2027)
-let gameState = JSON.parse(localStorage.getItem('resh_dada_system')) || {
+/* =========================================================
+   RESH_DADA HUNTER SYSTEM
+   VERSION 2.0
+========================================================= */
+
+
+/* =========================
+   DEFAULT SYSTEM DATA
+========================= */
+
+const DEFAULT_STATE = {
     level: 1,
     xp: 0,
     gold: 0,
+
     streak: 0,
-    examDate: "2027-04-27T00:00:00+05:45", // Hardcoded Nepal Time Zone (UTC+5:45)
-    lastStudyTime: 0,
-    lastGymTime: 0
+    bestStreak: 0,
+
+    totalQuests: 0,
+
+    lastActiveDate: null,
+
+    examDate: "2027-04-27T08:00:00",
+
+    quests: {
+        study: {
+            completed: false,
+            lastCompleted: 0
+        },
+
+        gym: {
+            completed: false,
+            lastCompleted: 0
+        },
+
+        walk: {
+            completed: false,
+            lastCompleted: 0
+        },
+
+        revision: {
+            completed: false,
+            lastCompleted: 0
+        }
+    }
 };
 
-// Synth Audio Engine for Anime SFX
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playSystemSound(type) {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
 
-    if (type === 'success') {
-        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); 
-        osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1); 
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.25);
-    } else if (type === 'penalty') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-        osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.4);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+/* =========================
+   LOAD DATA
+========================= */
+
+let savedData = localStorage.getItem("resh_dada_system");
+
+let gameState;
+
+try {
+
+    gameState = savedData
+        ? JSON.parse(savedData)
+        : structuredClone(DEFAULT_STATE);
+
+} catch (error) {
+
+    console.error("Save data corrupted. Resetting.");
+
+    gameState = structuredClone(DEFAULT_STATE);
+}
+
+
+/* =========================
+   MERGE MISSING DATA
+========================= */
+
+gameState = {
+    ...structuredClone(DEFAULT_STATE),
+    ...gameState,
+
+    quests: {
+        ...structuredClone(DEFAULT_STATE.quests),
+        ...(gameState.quests || {})
+    }
+};
+
+
+/* =========================
+   AUDIO SYSTEM
+========================= */
+
+let audioCtx = null;
+
+function getAudioContext() {
+
+    if (!audioCtx) {
+        audioCtx = new (
+            window.AudioContext ||
+            window.webkitAudioContext
+        )();
+    }
+
+    return audioCtx;
+}
+
+
+function playSystemSound(type) {
+
+    try {
+
+        const ctx = getAudioContext();
+
+        if (ctx.state === "suspended") {
+            ctx.resume();
+        }
+
+        const osc = ctx.createOscillator();
+
+        const gain = ctx.createGain();
+
+        osc.connect(gain);
+
+        gain.connect(ctx.destination);
+
+
+        if (type === "success") {
+
+            osc.type = "sine";
+
+            osc.frequency.setValueAtTime(
+                523,
+                ctx.currentTime
+            );
+
+            osc.frequency.setValueAtTime(
+                659,
+                ctx.currentTime + 0.08
+            );
+
+            osc.frequency.setValueAtTime(
+                784,
+                ctx.currentTime + 0.16
+            );
+
+            gain.gain.setValueAtTime(
+                0.08,
+                ctx.currentTime
+            );
+
+            gain.gain.exponentialRampToValueAtTime(
+                0.001,
+                ctx.currentTime + 0.4
+            );
+
+            osc.start();
+
+            osc.stop(ctx.currentTime + 0.4);
+
+        }
+
+
+        else if (type === "levelup") {
+
+            osc.type = "triangle";
+
+            osc.frequency.setValueAtTime(
+                392,
+                ctx.currentTime
+            );
+
+            osc.frequency.setValueAtTime(
+                523,
+                ctx.currentTime + 0.12
+            );
+
+            osc.frequency.setValueAtTime(
+                659,
+                ctx.currentTime + 0.24
+            );
+
+            osc.frequency.setValueAtTime(
+                988,
+                ctx.currentTime + 0.36
+            );
+
+            gain.gain.setValueAtTime(
+                0.1,
+                ctx.currentTime
+            );
+
+            gain.gain.exponentialRampToValueAtTime(
+                0.001,
+                ctx.currentTime + 0.8
+            );
+
+            osc.start();
+
+            osc.stop(ctx.currentTime + 0.8);
+
+        }
+
+
+        else if (type === "penalty") {
+
+            osc.type = "sawtooth";
+
+            osc.frequency.setValueAtTime(
+                160,
+                ctx.currentTime
+            );
+
+            osc.frequency.linearRampToValueAtTime(
+                60,
+                ctx.currentTime + 0.5
+            );
+
+            gain.gain.setValueAtTime(
+                0.08,
+                ctx.currentTime
+            );
+
+            gain.gain.exponentialRampToValueAtTime(
+                0.001,
+                ctx.currentTime + 0.5
+            );
+
+            osc.start();
+
+            osc.stop(ctx.currentTime + 0.5);
+        }
+
+    } catch (error) {
+
+        console.log("Audio unavailable.");
+
     }
 }
+
+
+/* =========================
+   SAVE
+========================= */
+
+function saveGame() {
+
+    localStorage.setItem(
+        "resh_dada_system",
+        JSON.stringify(gameState)
+    );
+}
+
+
+/* =========================
+   DATE HELPERS
+========================= */
+
+function getToday() {
+
+    const now = new Date();
+
+    return `${now.getFullYear()}-${String(
+        now.getMonth() + 1
+    ).padStart(2, "0")}-${String(
+        now.getDate()
+    ).padStart(2, "0")}`;
+}
+
+
+function resetDailyQuestsIfNeeded() {
+
+    const today = getToday();
+
+    if (gameState.lastActiveDate !== today) {
+
+        gameState.quests.study.completed = false;
+        gameState.quests.gym.completed = false;
+        gameState.quests.walk.completed = false;
+        gameState.quests.revision.completed = false;
+
+        gameState.lastActiveDate = today;
+
+        saveGame();
+    }
+}
+
+
+/* =========================
+   RANK SYSTEM
+========================= */
+
+function getRank(level) {
+
+    if (level >= 75) return "S-RANK";
+
+    if (level >= 50) return "A-RANK";
+
+    if (level >= 30) return "B-RANK";
+
+    if (level >= 15) return "C-RANK";
+
+    if (level >= 5) return "D-RANK";
+
+    return "E-RANK";
+}
+
+
+/* =========================
+   UPDATE MAIN UI
+========================= */
 
 function updateDOM() {
-    document.getElementById('playerLevel').innerText = gameState.level;
-    document.getElementById('playerXP').innerText = gameState.xp;
-    document.getElementById('playerGold').innerText = gameState.gold;
-    
-    let rank = "E-RANK";
-    if (gameState.level >= 5) rank = "D-RANK";
-    if (gameState.level >= 15) rank = "C-RANK";
-    if (gameState.level >= 30) rank = "B-RANK";
-    if (gameState.level >= 50) rank = "A-RANK";
-    if (gameState.level >= 75) rank = "S-RANK";
-    
-    document.getElementById('rankBadge').innerText = rank;
-    localStorage.setItem('resh_dada_system', JSON.stringify(gameState));
-    checkCooldowns();
+
+    resetDailyQuestsIfNeeded();
+
+
+    document.getElementById("playerLevel").innerText =
+        gameState.level;
+
+
+    document.getElementById("playerXP").innerText =
+        gameState.xp;
+
+
+    document.getElementById("playerGold").innerText =
+        gameState.gold;
+
+
+    document.getElementById("playerStreak").innerText =
+        `${gameState.streak} DAYS`;
+
+
+    const rank = getRank(gameState.level);
+
+    document.getElementById("rankBadge").innerText =
+        rank;
+
+
+    /* XP */
+
+    const xpPercentage =
+        Math.min(gameState.xp, 100);
+
+    document.getElementById("xpBar").style.width =
+        `${xpPercentage}%`;
+
+    document.getElementById("xpPercentage").innerText =
+        `${xpPercentage}%`;
+
+
+    /* Quests */
+
+    const completed =
+        Object.values(gameState.quests)
+        .filter(q => q.completed).length;
+
+
+    document.getElementById("questCount").innerText =
+        `${completed}/4`;
+
+    document.getElementById("completedQuestNumber").innerText =
+        completed;
+
+
+    updateQuestUI();
+
+    updateProgress();
+
+    updateAchievements();
+
+    updateCooldowns();
+
+    saveGame();
 }
 
-// Anti-Abuse Tracking Engine
-window.completeTask = function(type, rewardXP) {
-    const now = Date.now();
-    
-    if (type === 'study') {
-        const studyCooldown = 60 * 60 * 1000; // Strict 1 Hour Cooldown
-        if (now - gameState.lastStudyTime < studyCooldown) {
-            alert("⚠️ SYSTEM ERROR: System cooldown in effect. Your mental focus energy is depleted.");
-            return;
-        }
-        gameState.lastStudyTime = now;
-    } else if (type === 'gym') {
-        const gymCooldown = 16 * 60 * 60 * 1000; // 16 Hours Cooldown to stop spamming workouts
-        if (now - gameState.lastGymTime < gymCooldown) {
-            alert("⚠️ SYSTEM ERROR: Muscles are torn down. Rest protocol active.");
-            return;
-        }
-        gameState.lastGymTime = now;
-    }
 
-    playSystemSound('success');
-    gameState.xp += rewardXP;
-    gameState.gold += Math.floor(rewardXP * 0.5);
+/* =========================
+   QUEST COMPLETION
+========================= */
 
-    if (gameState.xp >= 100) {
-        gameState.level += 1;
-        gameState.xp -= 100;
-    }
-    updateDOM();
-};
+function completeTask(type) {
 
-// Cooldown UI Management
-function checkCooldowns() {
-    const now = Date.now();
-    const studyBtn = document.querySelector('.neon-blue');
-    const gymBtn = document.querySelector('.neon-green');
+    resetDailyQuestsIfNeeded();
 
-    // Study Button validation
-    const studyTimeLeft = (60 * 60 * 1000) - (now - gameState.lastStudyTime);
-    if (studyTimeLeft > 0) {
-        studyBtn.disabled = true;
-        const minLeft = Math.ceil(studyTimeLeft / (60 * 1000));
-        studyBtn.innerText = `🔒 Cooldown: ${minLeft}m left`;
-    } else {
-        studyBtn.disabled = false;
-        studyBtn.innerText = "Complete 1 Hour Session";
-    }
 
-    // Gym Button validation
-    const gymTimeLeft = (16 * 60 * 60 * 1000) - (now - gameState.lastGymTime);
-    if (gymTimeLeft > 0) {
-        gymBtn.disabled = true;
-        const hoursLeft = Math.ceil(gymTimeLeft / (60 * 60 * 1000));
-        gymBtn.innerText = `🔒 Recovering: ${hoursLeft}h left`;
-    } else {
-        gymBtn.disabled = false;
-        gymBtn.innerText = "Clear Workout Session";
-    }
-}
-
-window.triggerPenalty = function() {
-    playSystemSound('penalty');
-    alert("ALERT: Daily routine neglected. Initiating System Penalty protocol.");
-    gameState.streak = 0;
-    if (gameState.level > 1) gameState.level -= 1;
-    updateDOM();
-};
-
-window.resetData = function() {
-    if(confirm("Are you sure you want to wipe all hunter data?")) {
-        localStorage.removeItem('resh_dada_system');
-        location.reload();
-    }
-}
-
-// Live Countdown synced directly via Nepal Time Zone 
-function runTimer() {
-    const target = new Date(gameState.examDate).getTime();
-    const now = Date.now();
-    const diff = target - now;
-
-    if (diff <= 0) {
-        document.getElementById('countdownDisplay').innerText = "00d : 00h : 00m - GATE OPEN";
+    if (!gameState.quests[type]) {
         return;
     }
 
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-    document.getElementById('countdownDisplay').innerText = 
-        `${String(days).padStart(2, '0')}d : ${String(hours).padStart(2, '0')}h : ${String(minutes).padStart(2, '0')}m`;
-    
-    checkCooldowns();
+    if (gameState.quests[type].completed) {
+
+        showNotification(
+            "QUEST ALREADY COMPLETE",
+            "This quest has already been completed today.",
+            "warning"
+        );
+
+        return;
+    }
+
+
+    const rewards = {
+
+        study: {
+            xp: 25,
+            gold: 12,
+            message: "Study protocol successfully completed."
+        },
+
+        gym: {
+            xp: 40,
+            gold: 20,
+            message: "Training gate successfully cleared."
+        },
+
+        walk: {
+            xp: 15,
+            gold: 7,
+            message: "Mobility quest completed."
+        },
+
+        revision: {
+            xp: 20,
+            gold: 10,
+            message: "Revision protocol completed."
+        }
+
+    };
+
+
+    const reward = rewards[type];
+
+
+    if (!reward) {
+        return;
+    }
+
+
+    const previousLevel = gameState.level;
+
+
+    gameState.quests[type].completed = true;
+
+    gameState.quests[type].lastCompleted =
+        Date.now();
+
+
+    gameState.xp += reward.xp;
+
+    gameState.gold += reward.gold;
+
+    gameState.totalQuests++;
+
+
+    updateStreak();
+
+
+    /* LEVEL UP */
+
+    while (gameState.xp >= 100) {
+
+        gameState.xp -= 100;
+
+        gameState.level++;
+    }
+
+
+    saveGame();
+
+
+    playSystemSound(
+        gameState.level > previousLevel
+            ? "levelup"
+            : "success"
+    );
+
+
+    if (gameState.level > previousLevel) {
+
+        showLevelUp();
+
+    } else {
+
+        showNotification(
+            "QUEST COMPLETE",
+            `${reward.message} +${reward.xp} XP • +${reward.gold}G`,
+            "success"
+        );
+    }
+
+
+    updateDOM();
 }
 
-// Initial Run Core
+
+/* =========================
+   STREAK
+========================= */
+
+function updateStreak() {
+
+    const today = getToday();
+
+    const lastDate = gameState.lastActiveDate;
+
+
+    if (!lastDate) {
+
+        gameState.streak = 1;
+
+    }
+
+    else if (lastDate !== today) {
+
+        const previous =
+            new Date(lastDate);
+
+        const current =
+            new Date(today);
+
+
+        const difference =
+            Math.floor(
+                (current - previous) /
+                (1000 * 60 * 60 * 24)
+            );
+
+
+        if (difference === 1) {
+
+            gameState.streak++;
+
+        }
+
+        else if (difference > 1) {
+
+            gameState.streak = 1;
+        }
+    }
+
+
+    if (gameState.streak >
+        gameState.bestStreak) {
+
+        gameState.bestStreak =
+            gameState.streak;
+    }
+
+
+    gameState.lastActiveDate =
+        today;
+}
+
+
+/* =========================
+   QUEST UI
+========================= */
+
+function updateQuestUI() {
+
+    const questMap = {
+
+        study: {
+            card: "studyQuest",
+            button: "studyButton",
+            text: "COMPLETE STUDY"
+        },
+
+        gym: {
+            card: "gymQuest",
+            button: "gymButton",
+            text: "CLEAR WORKOUT"
+        },
+
+        walk: {
+            card: "walkQuest",
+            button: "walkButton",
+            text: "COMPLETE WALK"
+        },
+
+        revision: {
+            card: "revisionQuest",
+            button: "revisionButton",
+            text: "COMPLETE REVISION"
+        }
+
+    };
+
+
+    for (const type in questMap) {
+
+        const data = questMap[type];
+
+        const card =
+            document.getElementById(data.card);
+
+        const button =
+            document.getElementById(data.button);
+
+
+        if (gameState.quests[type].completed) {
+
+            card.classList.add("completed");
+
+            button.disabled = true;
+
+            button.innerText =
+                "✓ QUEST COMPLETE";
+
+        } else {
+
+            card.classList.remove("completed");
+
+            button.disabled = false;
+
+            button.innerText =
+                data.text;
+        }
+    }
+}
+
+
+/* =========================
+   PROGRESS
+========================= */
+
+function updateProgress() {
+
+    const quests = gameState.quests;
+
+
+    const study =
+        quests.study.completed ? 100 : 0;
+
+    const gym =
+        quests.gym.completed ? 100 : 0;
+
+    const walk =
+        quests.walk.completed ? 100 : 0;
+
+    const revision =
+        quests.revision.completed ? 100 : 0;
+
+
+    setProgress(
+        "studyProgress",
+        "studyProgressText",
+        study
+    );
+
+    setProgress(
+        "gymProgress",
+        "gymProgressText",
+        gym
+    );
+
+    setProgress(
+        "walkProgress",
+        "walkProgressText",
+        walk
+    );
+
+    setProgress(
+        "revisionProgress",
+        "revisionProgressText",
+        revision
+    );
+}
+
+
+function setProgress(barId, textId, value) {
+
+    document.getElementById(barId).style.width =
+        `${value}%`;
+
+    document.getElementById(textId).innerText =
+        `${value}%`;
+}
+
+
+/* =========================
+   ACHIEVEMENTS
+========================= */
+
+function updateAchievements() {
+
+    unlockAchievement(
+        "achievementFirst",
+        gameState.totalQuests >= 1
+    );
+
+
+    unlockAchievement(
+        "achievementLevel",
+        gameState.level >= 5
+    );
+
+
+    unlockAchievement(
+        "achievementStreak",
+        gameState.bestStreak >= 7
+    );
+
+
+    unlockAchievement(
+        "achievementGold",
+        gameState.gold >= 500
+    );
+}
+
+
+function unlockAchievement(id, unlocked) {
+
+    const element =
+        document.getElementById(id);
+
+    if (!element) {
+        return;
+    }
+
+    if (unlocked) {
+
+        element.classList.add("unlocked");
+
+        element.classList.remove("locked");
+
+    } else {
+
+        element.classList.remove("unlocked");
+
+        element.classList.add("locked");
+    }
+}
+
+
+/* =========================
+   NOTIFICATION SYSTEM
+========================= */
+
+let notificationTimeout;
+
+
+function showNotification(
+    title,
+    message,
+    type = "success"
+) {
+
+    const notification =
+        document.getElementById("notification");
+
+    const titleElement =
+        document.getElementById("notificationTitle");
+
+    const messageElement =
+        document.getElementById("notificationMessage");
+
+
+    titleElement.innerText =
+        title;
+
+    messageElement.innerText =
+        message;
+
+
+    if (type === "warning") {
+
+        notification.style.borderColor =
+            "#ff9d42";
+
+        titleElement.style.color =
+            "#ff9d42";
+
+    }
+
+    else if (type === "error") {
+
+        notification.style.borderColor =
+            "#ff245f";
+
+        titleElement.style.color =
+            "#ff245f";
+
+    }
+
+    else {
+
+        notification.style.borderColor =
+            "#00eaff";
+
+        titleElement.style.color =
+            "#00eaff";
+    }
+
+
+    notification.classList.add("show");
+
+
+    clearTimeout(notificationTimeout);
+
+
+    notificationTimeout =
+        setTimeout(() => {
+
+            notification.classList.remove("show");
+
+        }, 3500);
+}
+
+
+/* =========================
+   LEVEL UP
+========================= */
+
+function showLevelUp() {
+
+    document.getElementById("newLevel").innerText =
+        gameState.level;
+
+    document.getElementById("newRank").innerText =
+        getRank(gameState.level);
+
+
+    document
+        .getElementById("levelUpOverlay")
+        .classList.add("show");
+}
+
+
+function closeLevelUp() {
+
+    document
+        .getElementById("levelUpOverlay")
+        .classList.remove("show");
+
+
+    showNotification(
+        "LEVEL UP",
+        `You reached Level ${gameState.level}. Keep progressing.`,
+        "success"
+    );
+}
+
+
+/* =========================
+   COUNTDOWN
+========================= */
+
+function runTimer() {
+
+    const target =
+        new Date(gameState.examDate)
+        .getTime();
+
+
+    const now =
+        Date.now();
+
+
+    const difference =
+        target - now;
+
+
+    if (difference <= 0) {
+
+        document.getElementById("days").innerText =
+            "000";
+
+        document.getElementById("hours").innerText =
+            "00";
+
+        document.getElementById("minutes").innerText =
+            "00";
+
+        document.getElementById("seconds").innerText =
+            "00";
+
+        document.getElementById("systemStatus").innerText =
+            "EXAM GATE OPEN";
+
+        return;
+    }
+
+
+    const days =
+        Math.floor(
+            difference /
+            (1000 * 60 * 60 * 24)
+        );
+
+
+    const hours =
+        Math.floor(
+            (difference %
+                (1000 * 60 * 60 * 24)) /
+            (1000 * 60 * 60)
+        );
+
+
+    const minutes =
+        Math.floor(
+            (difference %
+                (1000 * 60 * 60)) /
+            (1000 * 60)
+        );
+
+
+    const seconds =
+        Math.floor(
+            (difference %
+                (1000 * 60)) /
+            1000
+        );
+
+
+    document.getElementById("days").innerText =
+        String(days).padStart(3, "0");
+
+
+    document.getElementById("hours").innerText =
+        String(hours).padStart(2, "0");
+
+
+    document.getElementById("minutes").innerText =
+        String(minutes).padStart(2, "0");
+
+
+    document.getElementById("seconds").innerText =
+        String(seconds).padStart(2, "0");
+}
+
+
+/* =========================
+   PENALTY
+========================= */
+
+function triggerPenalty() {
+
+    const confirmed =
+        confirm(
+            "⚠ SYSTEM WARNING\n\n" +
+            "Simulate a routine failure?\n\n" +
+            "This will reset your streak and remove one level if possible."
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    playSystemSound("penalty");
+
+
+    gameState.streak = 0;
+
+
+    if (gameState.level > 1) {
+
+        gameState.level--;
+
+        gameState.xp = 0;
+    }
+
+
+    saveGame();
+
+    updateDOM();
+
+
+    showNotification(
+        "PENALTY PROTOCOL",
+        "Routine failure registered. Streak reset.",
+        "error"
+    );
+}
+
+
+/* =========================
+   RESET SYSTEM
+========================= */
+
+function resetData() {
+
+    const confirmed =
+        confirm(
+            "⚠ RESET HUNTER SYSTEM?\n\n" +
+            "All level, XP, gold, streak and quest data will be permanently reset."
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    localStorage.removeItem(
+        "resh_dada_system"
+    );
+
+
+    location.reload();
+}
+
+
+/* =========================
+   INITIALIZATION
+========================= */
+
+resetDailyQuestsIfNeeded();
+
 updateDOM();
-setInterval(runTimer, 30000); // Ticks system every 30 seconds to refresh countdown & cooldown states
+
 runTimer();
 
-// Register PWA Engine so the app becomes installable
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        const swCode = `
-            const CACHE_NAME = 'resh-dada-v1';
-            self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(['./', './index.html', './styles.css', './app.js', './icon.svg', './manifest.json']))));
-            self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(res => res || fetch(e.request))));
-        `;
-        const blob = new Blob([swCode], { type: 'application/javascript' });
-        const swUrl = URL.createObjectURL(blob);
-        navigator.serviceWorker.register(swUrl).catch(err => console.log("System offline module error:", err));
-    });
+
+/* Update countdown every second */
+
+setInterval(
+    runTimer,
+    1000
+);
+
+
+/* Update cooldown / interface every minute */
+
+setInterval(
+    updateDOM,
+    60000
+);
+
+
+/* =========================
+   SERVICE WORKER
+========================= */
+
+if ("serviceWorker" in navigator) {
+
+    window.addEventListener(
+        "load",
+        () => {
+
+            navigator.serviceWorker
+                .register("./sw.js")
+                .then(() => {
+
+                    console.log(
+                        "Hunter System service worker active."
+                    );
+
+                })
+                .catch(error => {
+
+                    console.log(
+                        "Service worker registration failed:",
+                        error
+                    );
+
+                });
+        }
+    );
 }
