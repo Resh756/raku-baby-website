@@ -20,7 +20,7 @@ const DEFAULT_STATE = {
 
     lastActiveDate: null,
 
-    examDate: "2027-04-27T08:00:00",
+    examDate: "2027-04-27T08:00:00+05:45",
 
     quests: {
         study: {
